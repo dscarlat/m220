@@ -1,0 +1,2 @@
+conda activate mflix
+python run.py

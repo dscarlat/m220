@@ -1,0 +1,16 @@
+{
+  "mflix/api/__init__.py": true,
+  "tests/test_comments.py": true,
+  "tests/test_create_update_comments.py": true,
+  "tests/test_db_connection.py": true,
+  "tests/test_delete_comments.py": true,
+  "tests/test_error_handling.py": true,
+  "tests/test_errors.py": true,
+  "tests/test_facets.py": true,
+  "tests/test_migration.py": true,
+  "tests/test_paging.py": true,
+  "tests/test_projection.py": true,
+  "tests/test_text_and_subfield_search.py": true,
+  "tests/test_user_preferences.py": true,
+  "tests/test_user_report.py": true
+}

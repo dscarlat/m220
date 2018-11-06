@@ -88,7 +88,7 @@ def api_search_movies():
 @movies_api_v1.route('/id/<id>', methods=['GET'])
 def api_get_movie_by_id(id):
     movie = get_movie(id)
-    if movie is None or movie == {}:
+    if movie is None:
         return jsonify({
             "status": "fail"
         }), 400

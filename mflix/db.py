@@ -43,13 +43,13 @@ def get_db():
         """
 
         db = g._database = MongoClient(
-        MFLIX_DB_URI,
-        maxPoolSize=50,
-        wtimeout=2500,
-        # TODO: Connection Pooling
-        # Set the maximum connection pool size to 50 active connections.
-        # TODO: Timeouts
-        # Set the write timeout limit to 2500 milliseconds.
+            MFLIX_DB_URI,
+            maxPoolSize=50,
+            wtimeout=2500,
+            # TODO: Connection Pooling
+            # Set the maximum connection pool size to 50 active connections.
+            # TODO: Timeouts
+            # Set the write timeout limit to 2500 milliseconds.
         )["mflix"]
     return db
 
@@ -78,7 +78,7 @@ def get_movies_by_country(countries):
         # TODO: Projection
         # Find movies matching the "countries" list, but only return the title
         # and _id.
-        return list(db.movies.find({"countries": {"$in": countries}},{"title":1}))
+        return list(db.movies.find({"countries": {"$in": countries}}, {"title": 1}))
 
     except Exception as e:
         return e
@@ -237,7 +237,7 @@ def get_movies(filters, page, movies_per_page):
 
     # TODO: Paging
     # Use the cursor to only return the movies that belong on the current page.
-    movies = cursor.limit(movies_per_page).skip(page*movies_per_page)
+    movies = cursor.limit(movies_per_page).skip(page * movies_per_page)
 
     return (list(movies), total_num_movies)
 
@@ -275,7 +275,7 @@ def get_movie(id):
                     "localField": "_id",
                     "foreignField": "movie_id",
                     "as": "comments"
-                }        
+                }
             }
         ]
 
@@ -285,7 +285,7 @@ def get_movie(id):
         # TODO: Error Handling
         # If an invalid ID is passed to `get_movie`, it should return None.
     # except (StopIteration) as _:
-    except InvalidId as e:
+    except (InvalidId, StopIteration) as e:
 
         """
         Ticket: Error Handling
@@ -294,7 +294,8 @@ def get_movie(id):
         StopIteration exception is handled. Both exceptions should result in
         `get_movie` returning None.
         """
-
+        return {}
+    except Exception as e:
         return None
 
 
@@ -335,7 +336,8 @@ def add_comment(movie_id, user, comment, date):
     """
     # TODO: Create/Update Comments
     # Construct the comment document to be inserted into MongoDB.
-    comment_doc = {"name":user.name,"email":user.email,"movie_id":ObjectId(movie_id),"text":comment,"date":date}
+    comment_doc = {"name": user.name, "email": user.email,
+                   "movie_id": ObjectId(movie_id), "text": comment, "date": date}
     return db.comments.insert_one(comment_doc)
 
 
@@ -348,7 +350,8 @@ def update_comment(comment_id, user_email, text, date):
     # TODO: Create/Update Comments
     # Use the user_email and comment_id to select the proper comment, then
     # update the "text" and "date" of the selected comment.
-    response = db.comments.update_one({"_id": ObjectId(comment_id),"email":user_email}, {"$set": {"text": text,"date": date}})
+    response = db.comments.update_one({"_id": ObjectId(
+        comment_id), "email": user_email}, {"$set": {"text": text, "date": date}})
 
     return response
 
@@ -369,7 +372,7 @@ def delete_comment(comment_id, user_email):
     # TODO: Delete Comments
     # Use the user_email and comment_id to delete the proper comment.
     response = db.comments.delete_one(
-        {"_id": ObjectId(comment_id),"email":user_email}
+        {"_id": ObjectId(comment_id), "email": user_email}
     )
     return response
 
@@ -418,7 +421,8 @@ def add_user(name, email, hashedpw):
         # Insert a user with the "name", "email", and "password" fields.
         # TODO: Durable Writes
         # Use a more durable Write Concern for this operation.
-        db.users.insert_one({"name": name,"email": email,"password": hashedpw,"writeConcern":{"w":"majority"}})
+        db.users.insert_one({"name": name, "email": email,
+                             "password": hashedpw, "writeConcern": {"w": "majority"}})
         return {"success": True}
     except DuplicateKeyError:
         return {"error": "A user with the given email already exists."}
@@ -506,7 +510,8 @@ def update_prefs(email, prefs):
 
         # TODO: User preferences
         # Use the data in "prefs" to update the user's preferences.
-        response = db.users.update_one({"email": email}, {"$set": {"preferences": prefs}})
+        response = db.users.update_one(
+            {"email": email}, {"$set": {"preferences": prefs}})
         if response.matched_count == 0:
             return {'error': 'no user found'}
         else:
@@ -534,21 +539,21 @@ def most_active_commenters():
     pipeline = []
     group_stage = {
         "$group": {
-        "_id": "$email"
-            ,
-        "count": { "$sum": 1 }
+            "_id": "$email",
+            "count": {"$sum": 1}
         }
     }
     sort_stage = {
-        "$sort": { "count": -1 }
+        "$sort": {"count": -1}
     }
-    limit_stage={ "$limit": 20 }
+    limit_stage = {"$limit": 20}
     pipeline = [
         group_stage,
         sort_stage,
         limit_stage
     ]
-    rc = ReadConcern(level='majority') # you may want to change this read concern!
+    # you may want to change this read concern!
+    rc = ReadConcern(level='majority')
     comments = db.comments.with_options(read_concern=rc)
     result = comments.aggregate(pipeline)
     return list(result)
